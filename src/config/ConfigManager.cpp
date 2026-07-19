@@ -1,6 +1,7 @@
 #include "ConfigManager.h"
 #include "ConditionParser.h"
-
+#include "../event/CellAttachDetach/CellAttachDetach.h"
+#include "../core/IconManager.h"
 #include <json/json.h>
 
 namespace Config {
@@ -16,6 +17,85 @@ namespace Config {
         logger::info("SIF API: registered '{}'", name);
         return true;
     }
+
+    bool ConfigManager::RegisterTrackedRef(HMODULE key, RE::TESObjectREFR* ref){
+        if (!ref) {
+            logger::warn("{} - nullptr", __func__);
+            return false;
+        }       
+        bool bCanAddToCachedRefs = true;
+        bool bCanAddToImportedRefs = true;
+        for(const auto& e : importedRefs){
+            if(e.ref != ref){continue;}
+            if (e.key == key) {
+                bCanAddToImportedRefs = false;
+            }else {
+                bCanAddToCachedRefs = false;
+            }
+            if(!bCanAddToCachedRefs && !bCanAddToImportedRefs){break;}
+        };
+        if (bCanAddToImportedRefs) {
+
+            importedRefs.push_back({ key, ref });
+        }
+        if (bCanAddToCachedRefs){
+            if(!IsSuitableRef(ref)){
+
+                IconManager::getInstance()->AddCachedRef(ref);
+            }
+        }
+        return bCanAddToImportedRefs;
+    }
+
+    bool ConfigManager::UnregisterTrackedRef(HMODULE key, RE::TESObjectREFR* ref) {
+        if (!ref) {
+            logger::warn("{} - nullptr", __func__);
+            return false;
+        }
+        bool bCanRemoveImportedRefs = false;
+        bool bCanRemoveFromCachedRefs = true;
+        auto itFound = importedRefs.end();
+        for (auto it = importedRefs.begin(); it < importedRefs.end(); it++) {
+            const auto& e = *it;
+            if (e.ref != ref) { continue; }
+            if (e.key == key) {
+                itFound = it;  
+                bCanRemoveImportedRefs = true;
+            }else{
+                bCanRemoveFromCachedRefs = false; 
+            }
+            if(bCanRemoveImportedRefs && bCanRemoveFromCachedRefs){break;}
+        };
+        if (bCanRemoveImportedRefs) {
+            importedRefs.erase(itFound);
+        }
+        if (bCanRemoveFromCachedRefs){
+
+            if(!IsSuitableRef(ref)){
+                IconManager::getInstance()->RemoveCachedRef(ref->GetHandle());
+
+            }
+        }
+        return bCanRemoveImportedRefs;
+    }
+
+    int32_t ConfigManager::ClearTrackedRef(HMODULE key) {
+       int32_t count = 0;
+       std::vector<importedData> filtered;
+       std::copy_if(importedRefs.begin(),importedRefs.end(), std::back_inserter(filtered),
+           [&](const auto& e){
+                return e.key == key;
+           }
+       );
+       for (const auto& e : filtered) {
+           if(UnregisterTrackedRef(e.key, e.ref)){
+               count++; 
+           }
+       }
+       return count;
+    }
+
+
 
     void ConfigManager::LoadExternalConditions() {
         SKSE::GetMessagingInterface()->Dispatch(

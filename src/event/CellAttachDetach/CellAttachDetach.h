@@ -1,5 +1,7 @@
 #pragma once
 
+bool IsSuitableRef(RE::TESObjectREFR* ref);
+
 class CellAttachDetach :
 	public RE::BSTEventSink<RE::TESCellAttachDetachEvent>,
 	public SINGLETON<CellAttachDetach>

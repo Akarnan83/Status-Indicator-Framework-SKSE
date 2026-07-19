@@ -13,6 +13,11 @@ namespace Config {
         float scaleMin{ 35.0f };
         float scaleMax{ 100.0f };
     };
+    struct importedData{
+       HMODULE key;
+       RE::TESObjectREFR* ref;
+    };
+    inline std::vector<importedData> importedRefs;
 
     class ConfigManager : public SINGLETON<ConfigManager>, public SIF::IAPI {
         friend SINGLETON;
@@ -23,8 +28,19 @@ namespace Config {
             SIF::ConditionBuilder builder
         ) override;
 
+        virtual bool RegisterTrackedRef(
+            HMODULE key,
+            RE::TESObjectREFR* ref
+        ) override;
+        virtual int32_t ClearTrackedRef(HMODULE key) override;
+
+        virtual bool UnregisterTrackedRef(
+            HMODULE key,
+            RE::TESObjectREFR* ref
+        ) override;
+
         virtual uint32_t GetVersion() const override {
-            return 1;
+            return 2;
         }
 
         void LoadConfigs();
