@@ -15,7 +15,7 @@ public:
 	void HideIcon(RE::GFxValue& clip);
 	void AddCachedRef(RE::TESObjectREFR* ref);
 	void RemoveCachedRef(const RE::ObjectRefHandle& handle);
-
+	bool IsCachedRef(RE::TESObjectREFR* ref);
 private:
 	// max simultaneous instances of a single exported symbol
 	static constexpr std::size_t kMaxPerLabel = 48;

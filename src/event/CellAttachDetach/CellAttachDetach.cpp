@@ -7,7 +7,7 @@ void CellAttachDetach::Install()
 	RE::ScriptEventSourceHolder::GetSingleton()->AddEventSink<RE::TESCellAttachDetachEvent>(getInstance());
 }
 
-bool IsSuitableRef(RE::TESObjectREFR* ref)
+static bool IsSuitableRef(RE::TESObjectREFR* ref)
 {
 	if (!ref || ref->IsDeleted() || ref->IsDisabled()) {
 		return false;

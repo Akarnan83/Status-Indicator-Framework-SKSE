@@ -16,6 +16,10 @@ namespace Config {
     struct importedData{
        HMODULE key;
        RE::TESObjectREFR* ref;
+       bool operator==(const importedData& other) const
+       {
+           return key == other.key && ref == other.ref;
+       }
     };
     inline std::vector<importedData> importedRefs;
 

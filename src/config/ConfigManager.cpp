@@ -1,6 +1,5 @@
 #include "ConfigManager.h"
 #include "ConditionParser.h"
-#include "../event/CellAttachDetach/CellAttachDetach.h"
 #include "../core/IconManager.h"
 #include <json/json.h>
 
@@ -23,26 +22,14 @@ namespace Config {
             logger::warn("{} - nullptr", __func__);
             return false;
         }       
-        bool bCanAddToCachedRefs = true;
-        bool bCanAddToImportedRefs = true;
-        for(const auto& e : importedRefs){
-            if(e.ref != ref){continue;}
-            if (e.key == key) {
-                bCanAddToImportedRefs = false;
-            }else {
-                bCanAddToCachedRefs = false;
-            }
-            if(!bCanAddToCachedRefs && !bCanAddToImportedRefs){break;}
-        };
+        Config::importedData data = {key,ref};
+        bool bCanAddToImportedRefs = importedRefs.end() == std::find(importedRefs.begin(), importedRefs.end(), data);
         if (bCanAddToImportedRefs) {
-
-            importedRefs.push_back({ key, ref });
+            importedRefs.push_back(data);
         }
-        if (bCanAddToCachedRefs){
-            if(!IsSuitableRef(ref)){
-
-                IconManager::getInstance()->AddCachedRef(ref);
-            }
+        auto im = IconManager::getInstance();
+        if(!im->IsCachedRef(ref)){
+            im->AddCachedRef(ref);
         }
         return bCanAddToImportedRefs;
     }
@@ -52,31 +39,21 @@ namespace Config {
             logger::warn("{} - nullptr", __func__);
             return false;
         }
-        bool bCanRemoveImportedRefs = false;
-        bool bCanRemoveFromCachedRefs = true;
-        auto itFound = importedRefs.end();
-        for (auto it = importedRefs.begin(); it < importedRefs.end(); it++) {
-            const auto& e = *it;
-            if (e.ref != ref) { continue; }
-            if (e.key == key) {
-                itFound = it;  
-                bCanRemoveImportedRefs = true;
-            }else{
-                bCanRemoveFromCachedRefs = false; 
-            }
-            if(bCanRemoveImportedRefs && bCanRemoveFromCachedRefs){break;}
-        };
-        if (bCanRemoveImportedRefs) {
-            importedRefs.erase(itFound);
-        }
-        if (bCanRemoveFromCachedRefs){
 
-            if(!IsSuitableRef(ref)){
-                IconManager::getInstance()->RemoveCachedRef(ref->GetHandle());
+        Config::importedData data = { key,ref };
+        auto it = std::find(importedRefs.begin(), importedRefs.end(), data);
+        if(it == importedRefs.end()){return false;}
+        importedRefs.erase(it);
+        it = std::find_if(importedRefs.begin(), importedRefs.end(),[ref](const auto& data){
+            return data.ref == ref;
+        });
+        if(it != importedRefs.end()){return true;}
 
-            }
+        auto im = IconManager::getInstance();
+        if (!im->IsCachedRef(ref)) {
+            im->RemoveCachedRef(ref->GetHandle());
         }
-        return bCanRemoveImportedRefs;
+        return true;
     }
 
     int32_t ConfigManager::ClearTrackedRef(HMODULE key) {

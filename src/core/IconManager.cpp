@@ -409,3 +409,18 @@ void IconManager::RemoveCachedRef(const RE::ObjectRefHandle& handle)
 	_cachedRefs.pop_back();
 	_indexByHandle.erase(it);
 }
+
+
+bool IconManager::IsCachedRef(RE::TESObjectREFR* ref) {
+	if (!ref) {
+		return false;
+	}
+	const auto handle = ref->GetHandle();
+	if (!handle) {
+		return false;
+	}
+
+	auto it = std::find(_cachedRefs.begin(),_cachedRefs.end(),handle);
+	return  it != _cachedRefs.end();
+	
+}
