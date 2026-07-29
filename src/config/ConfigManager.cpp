@@ -17,59 +17,39 @@ namespace Config {
         return true;
     }
 
-    bool ConfigManager::RegisterTrackedRef(HMODULE key, RE::TESObjectREFR* ref){
+    void ConfigManager::RegisterTrackedRef(HMODULE key, RE::TESObjectREFR* ref){
         if (!ref) {
             logger::warn("{} - nullptr", __func__);
-            return false;
+            return;
         }       
-        Config::importedData data = {key,ref};
-        bool bCanAddToImportedRefs = importedRefs.end() == std::find(importedRefs.begin(), importedRefs.end(), data);
-        if (bCanAddToImportedRefs) {
-            importedRefs.push_back(data);
-        }
-        auto im = IconManager::getInstance();
-        if(!im->IsCachedRef(ref)){
-            im->AddCachedRef(ref);
-        }
-        return bCanAddToImportedRefs;
+        
+        IconManager::getInstance()->AddCachedRef(ref, key);
+        
+        return;
     }
 
-    bool ConfigManager::UnregisterTrackedRef(HMODULE key, RE::TESObjectREFR* ref) {
+    void ConfigManager::UnregisterTrackedRef(HMODULE key, RE::TESObjectREFR* ref) {
         if (!ref) {
             logger::warn("{} - nullptr", __func__);
-            return false;
+            return;
         }
 
-        Config::importedData data = { key,ref };
-        auto it = std::find(importedRefs.begin(), importedRefs.end(), data);
-        if(it == importedRefs.end()){return false;}
-        importedRefs.erase(it);
-        it = std::find_if(importedRefs.begin(), importedRefs.end(),[ref](const auto& data){
-            return data.ref == ref;
-        });
-        if(it != importedRefs.end()){return true;}
-
-        auto im = IconManager::getInstance();
-        if (!im->IsCachedRef(ref)) {
-            im->RemoveCachedRef(ref->GetHandle());
-        }
-        return true;
+        IconManager::getInstance()->RemoveCachedRef(ref->GetHandle(), key);
+        return ;
     }
 
-    int32_t ConfigManager::ClearTrackedRef(HMODULE key) {
-       int32_t count = 0;
-       std::vector<importedData> filtered;
-       std::copy_if(importedRefs.begin(),importedRefs.end(), std::back_inserter(filtered),
+    void ConfigManager::ClearTrackedRef(HMODULE key) {
+       auto im = IconManager::getInstance();
+       std::vector<IconManager::trackedData> filtered;
+       std::copy_if(im->trackedRef.begin(), im->trackedRef.end(), std::back_inserter(filtered),
            [&](const auto& e){
-                return e.key == key;
+                return e.owner == key;
            }
        );
        for (const auto& e : filtered) {
-           if(UnregisterTrackedRef(e.key, e.ref)){
-               count++; 
-           }
+           UnregisterTrackedRef(e.owner, e.ref);
        }
-       return count;
+       return;
     }
 
 

@@ -48,26 +48,26 @@ namespace SIF {
         // the module that contains this inline function. Plugins should use these
         // _public methods instead of the internal virtual interface.
 
-        inline bool RegisterTrackedRef_public(RE::TESObjectREFR* ref) {
-            return RegisterTrackedRef(GetCurrentModule(), ref);
+        inline void RegisterTrackedRef_public(RE::TESObjectREFR* ref) {
+            RegisterTrackedRef(GetCurrentModule(), ref);
         }
-        inline bool UnregisterTrackedRef_public(RE::TESObjectREFR* ref) {
-            return UnregisterTrackedRef(GetCurrentModule(), ref);
+        inline void UnregisterTrackedRef_public(RE::TESObjectREFR* ref) {
+            UnregisterTrackedRef(GetCurrentModule(), ref);
         }
-        inline int32_t ClearTrackedRef_public() {
-            return ClearTrackedRef(GetCurrentModule());
+        inline void ClearTrackedRef_public() {
+            ClearTrackedRef(GetCurrentModule());
         }
     private:
-        virtual bool RegisterTrackedRef(
+        virtual void RegisterTrackedRef(
             HMODULE key,
             RE::TESObjectREFR* ref
         ) = 0;
 
-        virtual bool UnregisterTrackedRef(
+        virtual void UnregisterTrackedRef(
             HMODULE key,
             RE::TESObjectREFR* ref
         ) = 0;
-        virtual int32_t ClearTrackedRef(HMODULE key) = 0;
+        virtual void ClearTrackedRef(HMODULE key) = 0;
         // API version for compatibility checks
         virtual uint32_t GetVersion() const = 0;
     };
